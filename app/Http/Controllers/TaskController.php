@@ -115,6 +115,13 @@ class TaskController extends Controller
         return $task;
     }
 
+    /**
+     * Delete the task
+     *
+     * @param string $id
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function destroy(string $id) : Response
     {
         $task = Task::where('id', $id)->first();
