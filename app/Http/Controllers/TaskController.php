@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use \Illuminate\Http\Response;
@@ -33,16 +34,22 @@ class TaskController extends Controller
         ]);
     }
 
-    public function show(string $task) : array|Response
+    /**
+     * @param string $task - tasks id
+     *
+     * @return array|\Illuminate\Http\Response
+     */
+    public function show(string $id) : array|Response
     {
-        $task = Task::findOrFail($task)->load('responsible');
+        $task = Task::findOrFail($id)->load('responsible');
+
         if (!$task)
         {
             return response([
                 'message' => 'Task not found',
             ], 404);
         }
-//        dd($task);
+
         return [
             'id'             => $task->id,
             'title'          => $task->title,
@@ -53,9 +60,23 @@ class TaskController extends Controller
         ];
     }
 
-    public function store()
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \App\Models\Task
+     */
+    public function store(Request $request) : Task
     {
-        return 'Hello world';
+        $taskData = $request->validate([
+            'title'     => ['required', 'string', 'min:3', 'max:255'],
+            'description' => ['required', 'string'],
+            'deadline' => ['date'],
+            'responsible_id' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        $newTask = Task::create($taskData);
+
+        return $newTask;
     }
 
     protected function formateDate(Carbon $date) : string
