@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property string $title
  * @property string $description
- * @property \Carbon\Carbon $deadline
+ * @property \Illuminate\Support\Carbon $deadline
  * @property StatusEnum $status
  * @property int $responsible_id
  */
