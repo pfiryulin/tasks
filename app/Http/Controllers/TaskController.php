@@ -27,22 +27,23 @@ class TaskController extends Controller
         ])->with('responsible')->get();
 
         return $tasks->map(fn(Task $task) => [
-            'id'             => $task->id,
-            'title'          => $task->title,
-            'description'    => $task->description,
-            'deadline'       => $this->formateDate($task->deadline),
-            'status'         => $task->status,
+            'id'          => $task->id,
+            'title'       => $task->title,
+            'description' => $task->description,
+            'deadline'    => $this->formateDate($task->deadline),
+            'status'      => $task->status,
             'responsible' => $task->responsible->name,
         ]);
     }
 
     /**
      * Show the task
+     *
      * @param string $task - tasks id
      *
      * @return array|\Illuminate\Http\Response
      */
-    public function show(string $id) : array | Response
+    public function show(string $id) : array|Response
     {
         $task = Task::where('id', $id)->with('responsible')->first();
 
@@ -54,11 +55,11 @@ class TaskController extends Controller
         }
 
         return [
-            'id'             => $task->id,
-            'title'          => $task->title,
-            'description'    => $task->description,
-            'deadline'       => $this->formateDate($task->deadline),
-            'status'         => $task->status,
+            'id'          => $task->id,
+            'title'       => $task->title,
+            'description' => $task->description,
+            'deadline'    => $this->formateDate($task->deadline),
+            'status'      => $task->status,
             'responsible' => $task->responsible->name,
         ];
     }
@@ -70,18 +71,32 @@ class TaskController extends Controller
      *
      * @return \App\Models\Task
      */
-    public function store(Request $request) : Task
+    public function store(Request $request) : array | Response
     {
         $taskData = $request->validate([
-            'title'     => ['required', 'string', 'min:3', 'max:255'],
-            'description' => ['required', 'string'],
-            'deadline' => ['date'],
+            'title'          => ['required', 'string', 'min:3', 'max:255'],
+            'description'    => ['required', 'string'],
+            'deadline'       => ['date'],
             'responsible_id' => ['required', 'integer', 'exists:users,id'],
         ]);
 
         $newTask = Task::create($taskData);
 
-        return $newTask;
+        if (!$newTask)
+        {
+            return response([
+                'message' => 'Task could not be created',
+            ], 500);
+        }
+
+        return [
+            'id'          => $newTask->id,
+            'title'       => $newTask->title,
+            'description' => $newTask->description,
+            'deadline'    => $this->formateDate($newTask->deadline),
+            'status'      => $newTask->status,
+            'responsible' => $newTask->responsible->name,
+        ];
     }
 
     /**
@@ -92,7 +107,7 @@ class TaskController extends Controller
      *
      * @return \App\Models\Task|\Illuminate\Http\Response
      */
-    public function update(Request $request, string $id) : Task | Response
+    public function update(Request $request, string $id) : array|Response
     {
         $task = Task::where('id', $id)->with('responsible')->first();
 
@@ -104,15 +119,22 @@ class TaskController extends Controller
         }
 
         $taskData = $request->validate([
-            'title'     => ['required', 'string', 'min:3', 'max:255'],
-            'description' => ['required', 'string'],
-            'deadline' => ['date'],
-            'responsible_id' => ['required', 'integer', 'exists:users,id'],
+            'title'          => ['nullable', 'string', 'min:3', 'max:255'],
+            'description'    => ['nullable', 'string'],
+            'deadline'       => ['date'],
+            'responsible_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
         $task->update($taskData);
         $task->refresh();
 
-        return $task;
+        return [
+            'id'          => $task->id,
+            'title'       => $task->title,
+            'description' => $task->description,
+            'deadline'    => $this->formateDate($task->deadline),
+            'status'      => $task->status,
+            'responsible' => $task->responsible->name,
+        ];
     }
 
     /**
@@ -137,7 +159,7 @@ class TaskController extends Controller
 
         return response([
             'message' => 'Task successfully deleted',
-            'id' => $taskId,
+            'id'      => $taskId,
         ]);
     }
 
