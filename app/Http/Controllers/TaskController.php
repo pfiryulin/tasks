@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\Task\TaskResource;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -13,9 +14,9 @@ class TaskController extends Controller
     /**
      * Show tasks list
      *
-     * @return \Illuminate\Support\Collection
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function index() : Collection
+    public function index() : \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
         $tasks = Task::query()->select([
             'id',
@@ -26,14 +27,16 @@ class TaskController extends Controller
             'responsible_id',
         ])->with('responsible')->get();
 
-        return $tasks->map(fn(Task $task) => [
-            'id'          => $task->id,
-            'title'       => $task->title,
-            'description' => $task->description,
-            'deadline'    => $this->formateDate($task->deadline),
-            'status'      => $task->status,
-            'responsible' => $task->responsible->name,
-        ]);
+//        return $tasks->map(fn(Task $task) => [
+//            'id'          => $task->id,
+//            'title'       => $task->title,
+//            'description' => $task->description,
+//            'deadline'    => $this->formateDate($task->deadline),
+//            'status'      => $task->status,
+//            'responsible' => $task->responsible->name,
+//        ]);
+
+        return TaskResource::collection($tasks);
     }
 
     /**
@@ -43,7 +46,7 @@ class TaskController extends Controller
      *
      * @return array|\Illuminate\Http\Response
      */
-    public function show(string $id) : array|Response
+    public function show(string $id) : TaskResource | Response
     {
         $task = Task::where('id', $id)->with('responsible')->first();
 
@@ -54,14 +57,7 @@ class TaskController extends Controller
             ], 404);
         }
 
-        return [
-            'id'          => $task->id,
-            'title'       => $task->title,
-            'description' => $task->description,
-            'deadline'    => $this->formateDate($task->deadline),
-            'status'      => $task->status,
-            'responsible' => $task->responsible->name,
-        ];
+        return new TaskResource($task);
     }
 
     /**
