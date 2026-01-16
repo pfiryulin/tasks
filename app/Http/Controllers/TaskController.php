@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Resources\Task\TaskResource;
 use App\Models\Task;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use \Illuminate\Http\Response;
 
 class TaskController extends Controller
@@ -26,15 +24,6 @@ class TaskController extends Controller
             'status',
             'responsible_id',
         ])->with('responsible')->get();
-
-//        return $tasks->map(fn(Task $task) => [
-//            'id'          => $task->id,
-//            'title'       => $task->title,
-//            'description' => $task->description,
-//            'deadline'    => $this->formateDate($task->deadline),
-//            'status'      => $task->status,
-//            'responsible' => $task->responsible->name,
-//        ]);
 
         return TaskResource::collection($tasks);
     }
@@ -67,7 +56,7 @@ class TaskController extends Controller
      *
      * @return \App\Models\Task
      */
-    public function store(Request $request) : array | Response
+    public function store(Request $request) : TaskResource | Response
     {
         $taskData = $request->validate([
             'title'          => ['required', 'string', 'min:3', 'max:255'],
@@ -85,14 +74,7 @@ class TaskController extends Controller
             ], 500);
         }
 
-        return [
-            'id'          => $newTask->id,
-            'title'       => $newTask->title,
-            'description' => $newTask->description,
-            'deadline'    => $this->formateDate($newTask->deadline),
-            'status'      => $newTask->status,
-            'responsible' => $newTask->responsible->name,
-        ];
+        return new TaskResource($newTask);
     }
 
     /**
@@ -103,7 +85,7 @@ class TaskController extends Controller
      *
      * @return \App\Models\Task|\Illuminate\Http\Response
      */
-    public function update(Request $request, string $id) : array|Response
+    public function update(Request $request, string $id) : TaskResource | Response
     {
         $task = Task::where('id', $id)->with('responsible')->first();
 
@@ -121,16 +103,8 @@ class TaskController extends Controller
             'responsible_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
         $task->update($taskData);
-        $task->refresh();
 
-        return [
-            'id'          => $task->id,
-            'title'       => $task->title,
-            'description' => $task->description,
-            'deadline'    => $this->formateDate($task->deadline),
-            'status'      => $task->status,
-            'responsible' => $task->responsible->name,
-        ];
+        return new TaskResource($task->load('responsible'));
     }
 
     /**
@@ -157,17 +131,5 @@ class TaskController extends Controller
             'message' => 'Task successfully deleted',
             'id'      => $taskId,
         ]);
-    }
-
-    /**
-     *  Date formatting
-     *
-     * @param \Illuminate\Support\Carbon $date
-     *
-     * @return string
-     */
-    protected function formateDate(Carbon $date) : string
-    {
-        return $date->format('d.m.Y');
     }
 }
